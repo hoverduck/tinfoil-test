@@ -16,16 +16,16 @@ memory: 8192
 # Container configuration
 # Note: image must include SHA256 hash (e.g., image:tag@sha256:abc123...)
 containers:
-  - name: "app"
-    image: "your-image:tag@sha256:..."
+  - name: "hello-world"
+    image: "hashicorp/http-echo:latest@sha256:fcb75f691c8b0414d670ae570240cbf95502cc18a9ba57e982ecac589760a186"
+    command: ["-listen=:8080", "-text=Hello from a Tinfoil Container!"]
     env:
       - LOG_LEVEL: "info"
     secrets:
       - API_KEY
-    command: ["--port", "8000"]
 
-# Shim configuration (adjust upstream-port and paths to match your container)
+# Shim configuration (http-echo listens on 8080, exposed via the default HTTPS port)
 shim:
-  upstream-port: 8000
+  upstream-port: 8080
   paths:
-    - /health
+    - /*
