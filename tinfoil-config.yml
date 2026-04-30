@@ -1,31 +1,26 @@
-# Tinfoil Container Configuration
-# This file will be auto-populated when you deploy via the Tinfoil dashboard.
-# You can also edit it manually - see docs at https://docs.tinfoil.sh/containers/config
-#
-# After creating this repo from the template:
-# 1. Go to https://dash.tinfoil.sh and create a new container
-# 2. Provide this repository URL and your container details
-# 3. This file will be automatically updated with your deployment settings
-#
-# For updates: edit this file, commit, and push a new tag (e.g., v2)
-
 cvm-version: 0.7.5
-cpus: 2
-memory: 8192
+cpus: 16
+memory: 65536
+gpus: 1
 
-# Container configuration
-# Note: image must include SHA256 hash (e.g., image:tag@sha256:abc123...)
 containers:
-  - name: "hello-world"
-    image: "hashicorp/http-echo:latest@sha256:fcb75f691c8b0414d670ae570240cbf95502cc18a9ba57e982ecac589760a186"
-    command: ["-listen=:8080", "-text=Hello from a Tinfoil Container!"]
-    env:
-      - LOG_LEVEL: "info"
-    secrets:
-      - API_KEY
+  - name: "inference"
+    image: "vllm/vllm-openai:v0.14.1@sha256:8e67731819426f7df194e5a0dfd6649d3aa3474f80c44f75b1e8711e76f8030a"
+    runtime: nvidia
+    gpus: all
+    ipc: host
+    command: ["--model", "/models/my-model", "--port", "8001"]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30m
+    restart: always
 
-# Shim configuration (http-echo listens on 8080, exposed via the default HTTPS port)
 shim:
-  upstream-port: 8080
+  upstream-port: 8001
   paths:
-    - /*
+    - /v1/chat/completions
+    - /v1/completions
+    - /health
+    - /metrics
